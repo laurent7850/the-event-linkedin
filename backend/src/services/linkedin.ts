@@ -55,8 +55,10 @@ export async function storeToken(accessToken: string, expiresIn: number, scope: 
   await logAudit('linkedin_token_stored', 'system', 'oauth_tokens', subjectId, { scope });
 }
 
-export async function getValidToken(): Promise<{token:string;subjectId:string}|null> {
-  const r = await query('SELECT access_token_encrypted, subject_id FROM oauth_tokens WHERE provider='linkedin' AND expires_at>NOW() ORDER BY updated_at DESC LIMIT 1');
+export async function getValidToken(): Promise<{token: string; subjectId: string} | null> {
+  const r = await query(
+    "SELECT access_token_encrypted, subject_id FROM oauth_tokens WHERE provider='linkedin' AND expires_at > NOW() ORDER BY updated_at DESC LIMIT 1"
+  );
   if (r.rows.length === 0) return null;
   return { token: decrypt(r.rows[0].access_token_encrypted), subjectId: r.rows[0].subject_id };
 }
@@ -94,7 +96,9 @@ export async function publishPost(text: string) {
 }
 
 export async function getConnectionStatus() {
-  const r = await query('SELECT expires_at, profile_data FROM oauth_tokens WHERE provider='linkedin' ORDER BY updated_at DESC LIMIT 1');
+  const r = await query(
+    "SELECT expires_at, profile_data FROM oauth_tokens WHERE provider='linkedin' ORDER BY updated_at DESC LIMIT 1"
+  );
   if (r.rows.length === 0) return { connected: false };
   return { connected: new Date(r.rows[0].expires_at) > new Date(), expiresAt: r.rows[0].expires_at, profile: r.rows[0].profile_data };
 }

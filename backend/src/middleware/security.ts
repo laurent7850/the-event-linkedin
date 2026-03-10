@@ -24,7 +24,7 @@ export function applySecurity(app: Express) {
 
   const limiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 200,
+    max: 1000,
     standardHeaders: true,
     legacyHeaders: false,
     message: { error: 'Too many requests, please try again later' },
@@ -33,7 +33,7 @@ export function applySecurity(app: Express) {
 
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
-    max: 10,
+    max: 50,
     message: { error: 'Too many login attempts' },
   });
   app.use('/api/auth/login', authLimiter);

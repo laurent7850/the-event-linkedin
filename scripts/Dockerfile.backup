@@ -1,0 +1,6 @@
+FROM postgres:16-alpine
+RUN apk add --no-cache bash openssl dcron
+COPY backup.sh /usr/local/bin/backup.sh
+COPY restore.sh /usr/local/bin/restore.sh
+RUN chmod +x /usr/local/bin/backup.sh /usr/local/bin/restore.sh
+CMD ["sh", "-c", "echo \"${BACKUP_CRON} /usr/local/bin/backup.sh >> /var/log/backup.log 2>&1\" | crontab - && crond -f -l 2"]

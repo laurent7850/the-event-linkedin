@@ -1,0 +1,25 @@
+version: "3.8"
+
+# Staging overrides — usage:
+# docker compose -f docker-compose.yml -f docker-compose.staging.yml up -d
+
+services:
+  traefik:
+    ports:
+      - "8080:80"
+      - "8443:443"
+
+  backend:
+    environment:
+      NODE_ENV: staging
+      LOG_LEVEL: debug
+    labels:
+      - "traefik.http.routers.backend.tls.certresolver="
+
+  frontend:
+    labels:
+      - "traefik.http.routers.frontend.tls.certresolver="
+
+  n8n:
+    labels:
+      - "traefik.http.routers.n8n.tls.certresolver="

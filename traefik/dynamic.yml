@@ -1,0 +1,22 @@
+http:
+  middlewares:
+    security-headers:
+      headers:
+        browserXssFilter: true
+        contentTypeNosniff: true
+        frameDeny: true
+        stsIncludeSubdomains: true
+        stsPreload: true
+        stsSeconds: 31536000
+        customFrameOptionsValue: "SAMEORIGIN"
+        referrerPolicy: "strict-origin-when-cross-origin"
+        customResponseHeaders:
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "SAMEORIGIN"
+          Permissions-Policy: "camera=(), microphone=(), geolocation=()"
+
+    rate-limit:
+      rateLimit:
+        average: 100
+        burst: 50
+        period: 1m

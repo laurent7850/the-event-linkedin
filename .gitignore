@@ -1,0 +1,17 @@
+node_modules/
+dist/
+build/
+.next/
+.env
+.env.local
+.env.production
+*.log
+*.pid
+backups/
+data/
+n8n-data/
+postgres-data/
+.DS_Store
+Thumbs.db
+coverage/
+.nyc_output/

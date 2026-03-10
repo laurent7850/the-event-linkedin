@@ -12,6 +12,9 @@ import webhookRoutes from './routes/webhook';
 const app = express();
 const port = parseInt(process.env.BACKEND_PORT || '3001', 10);
 
+// Trust proxy (behind Traefik)
+app.set('trust proxy', 1);
+
 // Security
 applySecurity(app);
 

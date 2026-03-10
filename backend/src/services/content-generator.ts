@@ -60,15 +60,12 @@ export async function generateWeeklyPost(): Promise<{ postId: string; status: st
   const userPrompt = prompt.user_prompt_template
     .replace('{{date}}', new Date().toLocaleDateString('fr-BE'))
     .replace('{{angle}}', angle)
-    .replace('{{services}}', selectedServices.map((s: any) => s.name + ': ' + s.description).join('
-'))
+    .replace('{{services}}', selectedServices.map((s: any) => s.name + ': ' + s.description).join('\n'))
     .replace('{{season_context}}', getSeasonContext())
     .replace('{{recent_posts}}', recentPosts.map((p: any, i: number) =>
       'Post ' + (i+1) + ': ' + (p.hook || p.body.substring(0, 100)) + '...'
-    ).join('
-'))
-    .replace('{{services_catalog}}', allServices.map((s: any) => '- ' + s.name + ': ' + s.description).join('
-'));
+    ).join('\n'))
+    .replace('{{services_catalog}}', allServices.map((s: any) => '- ' + s.name + ': ' + s.description).join('\n'));
 
   logger.info('Generating weekly post', { angle, services: selectedServices.map((s: any) => s.slug) });
   const result = await generateContent(prompt.system_prompt, userPrompt);

@@ -1,5 +1,6 @@
 import express from 'express';
 import cookieParser from 'cookie-parser';
+import path from 'path';
 import { applySecurity } from './middleware/security';
 import { healthCheck } from './config/database';
 import { logger } from './utils/logger';
@@ -31,15 +32,20 @@ app.get('/api/health', async (req, res) => {
   });
 });
 
-// Routes
+// API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/posts', postsRoutes);
 app.use('/api/admin', settingsRoutes);
 app.use('/api/webhook', webhookRoutes);
 
-// 404
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
+// Serve frontend static files in production
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir));
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api/')) {
+    return res.status(404).json({ error: 'Not found' });
+  }
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 // Error handler

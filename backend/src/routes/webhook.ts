@@ -10,7 +10,7 @@ const router = Router();
 // n8n calls this endpoint to trigger weekly generation
 router.post('/generate-and-publish', async (req: Request, res: Response) => {
   const authHeader = req.headers['x-webhook-secret'];
-  if (authHeader !== process.env.SESSION_SECRET) {
+  if (authHeader !== process.env.WEBHOOK_SECRET) {
     return res.status(403).json({ error: 'Forbidden' });
   }
 

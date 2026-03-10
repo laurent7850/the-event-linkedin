@@ -12,18 +12,18 @@ const ANGLES = [
 function getSeasonContext(): string {
   const month = new Date().getMonth();
   const seasons: Record<number, string> = {
-    0: 'Janvier - Voeux, reprise',
-    1: 'Février - Corporate',
-    2: 'Mars - Printemps, salons',
-    3: 'Avril - Team building',
-    4: 'Mai - Plein air, garden parties',
-    5: 'Juin - Fin saison corporate',
-    6: 'Juillet - Estival, festivals',
-    7: 'Août - Prépa rentrée',
-    8: 'Septembre - Rentrée, kick-offs',
-    9: 'Octobre - Automne, soirées',
-    10: 'Novembre - Fêtes approchent',
-    11: 'Décembre - Noël, réceptions',
+    0: 'January - New year, fresh start',
+    1: 'February - Corporate season',
+    2: 'March - Spring, trade shows',
+    3: 'April - Team building',
+    4: 'May - Outdoor, garden parties',
+    5: 'June - End of corporate season',
+    6: 'July - Summer, festivals',
+    7: 'August - Back-to-business prep',
+    8: 'September - Back to business, kick-offs',
+    9: 'October - Autumn, evening events',
+    10: 'November - Holiday season approaching',
+    11: 'December - Christmas, receptions',
   };
   return seasons[month] || '';
 }
@@ -95,7 +95,7 @@ export async function generateWeeklyPost(): Promise<{ postId: string; status: st
      (title, hook, body, cta, hashtags, status, service_tags, theme_tags, language, generation_model, generation_meta, similarity_score, approval_required, hook_variants, short_version, scheduled_for)
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15, NOW()) RETURNING id`,
     [parsed.title||'Post LinkedIn', parsed.hook||'', body, parsed.cta||'', parsed.hashtags||[], status,
-     parsed.service_tags||selectedServices.map((s:any)=>s.slug), parsed.theme_tags||[angle], 'fr', result.model,
+     parsed.service_tags||selectedServices.map((s:any)=>s.slug), parsed.theme_tags||[angle], 'en', result.model,
      JSON.stringify({usage:result.usage,cost:result.cost,angle,prompt_version:prompt.version}),
      similarityScore, manualApproval, JSON.stringify(parsed.hook_variants||[]), parsed.short_version||'']
   );

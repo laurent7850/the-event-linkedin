@@ -5,14 +5,7 @@ import { Express } from 'express';
 
 export function applySecurity(app: Express) {
   app.use(helmet({
-    contentSecurityPolicy: {
-      directives: {
-        defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
-        imgSrc: ["'self'", "data:", "https:"],
-      },
-    },
+    contentSecurityPolicy: false,
   }));
 
   app.use(cors({

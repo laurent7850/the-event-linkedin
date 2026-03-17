@@ -7,7 +7,6 @@ async function request(path: string, options: RequestInit = {}) {
     headers: { 'Content-Type': 'application/json', ...options.headers },
   });
   if (res.status === 401) {
-    window.location.href = '/login';
     throw new Error('Unauthorized');
   }
   if (!res.ok) {

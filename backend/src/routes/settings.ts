@@ -11,8 +11,17 @@ router.get('/services', requireAuth, async (req: AuthRequest, res: Response) => 
 
 router.put('/services/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   const { name, description, is_active } = req.body;
+  if (!name || typeof name !== 'string' || name.length > 200) {
+    return res.status(400).json({ error: 'Nom invalide' });
+  }
+  if (description && (typeof description !== 'string' || description.length > 2000)) {
+    return res.status(400).json({ error: 'Description invalide' });
+  }
+  if (typeof is_active !== 'boolean') {
+    return res.status(400).json({ error: 'is_active doit être un booléen' });
+  }
   await query('UPDATE services_catalog SET name=\$1, description=\$2, is_active=\$3 WHERE id=\$4',
-    [name, description, is_active, req.params.id]);
+    [name.trim(), description?.trim(), is_active, req.params.id]);
   res.json({ ok: true });
 });
 
@@ -23,8 +32,17 @@ router.get('/prompts', requireAuth, async (req: AuthRequest, res: Response) => {
 
 router.put('/prompts/:id', requireAuth, async (req: AuthRequest, res: Response) => {
   const { name, system_prompt, user_prompt_template, is_active } = req.body;
+  if (!name || typeof name !== 'string' || name.length > 200) {
+    return res.status(400).json({ error: 'Nom invalide' });
+  }
+  if (system_prompt && (typeof system_prompt !== 'string' || system_prompt.length > 10000)) {
+    return res.status(400).json({ error: 'system_prompt trop long (max 10000)' });
+  }
+  if (user_prompt_template && (typeof user_prompt_template !== 'string' || user_prompt_template.length > 10000)) {
+    return res.status(400).json({ error: 'user_prompt_template trop long (max 10000)' });
+  }
   await query('UPDATE editorial_prompts SET name=\$1, system_prompt=\$2, user_prompt_template=\$3, is_active=\$4 WHERE id=\$5',
-    [name, system_prompt, user_prompt_template, is_active, req.params.id]);
+    [name.trim(), system_prompt, user_prompt_template, is_active, req.params.id]);
   res.json({ ok: true });
 });
 
@@ -35,10 +53,24 @@ router.get('/settings', requireAuth, async (req: AuthRequest, res: Response) => 
   res.json(settings);
 });
 
+const ALLOWED_SETTINGS_KEYS = [
+  'linkedin_posting_enabled', 'default_language', 'posting_schedule',
+  'auto_publish', 'review_required', 'max_posts_per_day',
+];
+
 router.put('/settings/:key', requireAuth, async (req: AuthRequest, res: Response) => {
+  const { key } = req.params;
   const { value } = req.body;
+
+  if (!ALLOWED_SETTINGS_KEYS.includes(key)) {
+    return res.status(400).json({ error: `Clé non autorisée: ${key}` });
+  }
+  if (value === undefined || value === null) {
+    return res.status(400).json({ error: 'Valeur requise' });
+  }
+
   await query('INSERT INTO app_settings (key, value) VALUES (\$1, \$2) ON CONFLICT (key) DO UPDATE SET value = \$2',
-    [req.params.key, JSON.stringify(value)]);
+    [key, JSON.stringify(value)]);
   res.json({ ok: true });
 });
 

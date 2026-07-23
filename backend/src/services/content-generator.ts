@@ -40,6 +40,31 @@ function selectServices(allServices: any[]): any[] {
   return active.sort(() => Math.random() - 0.5).slice(0, count);
 }
 
+function extractJson(raw: string): any {
+  const trimmed = raw.trim();
+  try {
+    return JSON.parse(trimmed);
+  } catch {
+    // fall through
+  }
+
+  const fenced = trimmed.match(/```(?:json)?\s*([\s\S]*?)\s*```/i);
+  if (fenced) {
+    try {
+      return JSON.parse(fenced[1].trim());
+    } catch {
+      // fall through
+    }
+  }
+
+  const braceMatch = trimmed.match(/\{[\s\S]*\}/);
+  if (braceMatch) {
+    return JSON.parse(braceMatch[0]);
+  }
+
+  throw new Error('no JSON object found in response');
+}
+
 export async function generateWeeklyPost(): Promise<{ postId: string; status: string; content: any }> {
   const promptResult = await query('SELECT * FROM editorial_prompts WHERE is_active = true ORDER BY created_at DESC LIMIT 1');
   if (promptResult.rows.length === 0) throw new Error('No active editorial prompt found');
@@ -71,8 +96,12 @@ export async function generateWeeklyPost(): Promise<{ postId: string; status: st
   const result = await generateContent(prompt.system_prompt, userPrompt);
 
   let parsed: any;
-  try { parsed = JSON.parse(result.content); }
-  catch { throw new Error('AI response was not valid JSON'); }
+  try {
+    parsed = extractJson(result.content);
+  } catch {
+    logger.error('AI response was not valid JSON', { rawContent: result.content.slice(0, 4000) });
+    throw new Error('AI response was not valid JSON');
+  }
 
   const body = parsed.body || '';
   const editorialConfig = await query("SELECT value FROM app_settings WHERE key = 'editorial_config'");

@@ -107,17 +107,46 @@ export async function generateWeeklyPost(): Promise<{ postId: string; status: st
   const editorialConfig = await query("SELECT value FROM app_settings WHERE key = 'editorial_config'");
   const config = editorialConfig.rows[0]?.value || {};
 
-  let similarityScore = 0;
-  if (recentPosts.length > 0) {
-    const simResult = await query(
-      "SELECT MAX(similarity(body, $1)) as max_sim FROM posts_archive WHERE deleted_at IS NULL AND generated_at > NOW() - INTERVAL '90 days'",
-      [body]
-    );
-    similarityScore = parseFloat(simResult.rows[0]?.max_sim || '0');
-  }
+  // Registre des parutions : ce sujet a-t-il deja ete traite ?
+  //
+  // Remplace l'ancien MAX(similarity(body, ...)) sur 90 jours, qui souffrait de
+  // deux defauts : il comparait des corps de texte entiers (deux posts sur le
+  // meme sujet rediges differemment y echappaient) et son score n'etait que
+  // stocke — aucune decision n'en decoulait, le doublon partait quand meme.
+  const subject = [
+    ...(parsed.theme_tags || []),
+    ...selectedServices.map((s: any) => s.slug),
+    parsed.title || '',
+  ].join(' ').trim();
 
+  const similarResult = await query(
+    `SELECT title, url, published_at, jaccard, title_similarity, verdict
+       FROM publication_find_similar($1, 'theevent', $2, 'linkedin', NULL, 3)`,
+    [subject, 'fr']
+  );
+  const closest = similarResult.rows[0];
+  const similarityScore = closest
+    ? Math.max(
+        parseFloat(closest.jaccard || '0'),
+        parseFloat(closest.title_similarity || '0')
+      )
+    : 0;
+
+  // Un doublon avere ne part jamais en publication automatique : il passe en
+  // revue humaine, quel que soit le reglage manual_approval.
+  const isDuplicate = closest?.verdict === 'duplicate';
   const manualApproval = config.manual_approval || false;
-  const status = manualApproval ? 'review_pending' : 'generated';
+  const status = (manualApproval || isDuplicate) ? 'review_pending' : 'generated';
+
+  if (isDuplicate) {
+    logger.warn('Sujet deja traite — post mis en revue au lieu de partir en publication', {
+      subject,
+      closest: closest.title,
+      closestPublishedAt: closest.published_at,
+      jaccard: closest.jaccard,
+      titleSimilarity: closest.title_similarity,
+    });
+  }
 
   const insertResult = await query(
     `INSERT INTO posts_archive
@@ -126,11 +155,14 @@ export async function generateWeeklyPost(): Promise<{ postId: string; status: st
     [parsed.title||'Post LinkedIn', parsed.hook||'', body, parsed.cta||'', parsed.hashtags||[], status,
      parsed.service_tags||selectedServices.map((s:any)=>s.slug), parsed.theme_tags||[angle], 'fr', result.model,
      JSON.stringify({usage:result.usage,cost:result.cost,angle,prompt_version:prompt.version}),
-     similarityScore, manualApproval, JSON.stringify(parsed.hook_variants||[]), parsed.short_version||'']
+     similarityScore, manualApproval || isDuplicate, JSON.stringify(parsed.hook_variants||[]), parsed.short_version||'']
   );
 
   const postId = insertResult.rows[0].id;
-  await logAudit('post_generated', 'system', 'posts_archive', postId, { angle, model: result.model, similarity: similarityScore });
-  logger.info('Weekly post generated', { postId, status, similarity: similarityScore });
+  await logAudit('post_generated', 'system', 'posts_archive', postId, {
+    angle, model: result.model, similarity: similarityScore,
+    duplicateOf: isDuplicate ? closest.title : null,
+  });
+  logger.info('Weekly post generated', { postId, status, similarity: similarityScore, isDuplicate });
   return { postId, status, content: parsed };
 }

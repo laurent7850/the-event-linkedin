@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { api } from '../utils/api'
-import { Plus, Search, Filter } from 'lucide-react'
+import { Plus, Search } from 'lucide-react'
 
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   generated: { label: 'Généré', color: 'bg-blue-100 text-blue-800' },

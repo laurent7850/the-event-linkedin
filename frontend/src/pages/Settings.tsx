@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { api } from '../utils/api'
-import { Linkedin, Save, RefreshCw } from 'lucide-react'
+import { Linkedin } from 'lucide-react'
 
 export default function Settings() {
   const [settings, setSettings] = useState<any>({})
@@ -49,6 +49,7 @@ export default function Settings() {
         <div className="mt-4 flex items-center gap-3">
           <label className="text-sm">Publication automatique</label>
           <input type="checkbox" checked={linkedinConfig.publish_enabled || false}
+            disabled={saving}
             onChange={e => saveSetting('linkedin_config', { ...linkedinConfig, publish_enabled: e.target.checked })}
             className="w-4 h-4 text-brand-600" />
         </div>
